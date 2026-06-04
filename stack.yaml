@@ -1,0 +1,33 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://localhost:8081
+
+functions:
+  generate-password:
+    lang: dockerfile
+    handler: ./generate-password
+    image: valentinlob/generate-password:latest
+    secrets:
+      - db-credentials
+
+  generate-2fa:
+    lang: dockerfile
+    handler: ./generate-2fa
+    image: valentinlob/generate-2fa:latest
+    secrets:
+      - db-credentials
+
+  authenticate:
+    lang: dockerfile
+    handler: ./authenticate
+    image: valentinlob/authenticate:latest
+    secrets:
+      - db-credentials
+
+  renew-credentials:
+    lang: dockerfile
+    handler: ./renew-credentials
+    image: valentinlob/renew-credentials:latest
+    secrets:
+      - db-credentials
