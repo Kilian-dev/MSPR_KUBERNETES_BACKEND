@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: MSPR_2
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install function dependencies
+        run: |
+          pip install -r generate-password/function/requirements.txt
+          pip install -r generate-2fa/function/requirements.txt
+          pip install -r authenticate/function/requirements.txt
+          pip install -r renew-credentials/function/requirements.txt
+
+      - name: Init database schema
+        env:
+          PGPASSWORD: ci_password
+        run: psql -h localhost -U postgres -d MSPR_2 -f k8s/init-db.sql
+
+      - name: Run handler tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: MSPR_2
+          DB_USER: postgres
+          DB_PASSWORD: ci_password
+        run: pytest test_unitaires/ -v

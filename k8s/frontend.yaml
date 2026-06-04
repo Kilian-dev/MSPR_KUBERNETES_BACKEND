@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cofrap-frontend
+  namespace: cofrap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cofrap-frontend
+  template:
+    metadata:
+      labels:
+        app: cofrap-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: TONUSER/cofrap-frontend:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: OPENFAAS_URL
+          value: "http://gateway.openfaas.svc.cluster.local:8080"
+        - name: OPENFAAS_USER
+          value: "admin"
+        - name: OPENFAAS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: basic-auth
+              key: basic-auth-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cofrap-frontend
+  namespace: cofrap
+spec:
+  selector:
+    app: cofrap-frontend
+  ports:
+  - port: 80
+    targetPort: 5000
